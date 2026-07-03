@@ -159,13 +159,13 @@ export default function PublicSalonPage({
     switch (preset) {
       case 'spa-dorado':
         return (
-          <div className="max-w-2xl mx-auto px-4 pt-3 flex justify-end space-x-1.5 text-xs font-bold text-amber-600/80 tracking-widest uppercase">
+          <div className="max-w-2xl lg:max-w-5xl mx-auto px-4 pt-3 flex justify-end space-x-1.5 text-xs font-bold text-amber-600/80 tracking-widest uppercase">
             <span>✨ SUCURSAL PREMIUM ✨</span>
           </div>
         );
       case 'floral-neon':
         return (
-          <div className="max-w-2xl mx-auto px-4 pt-3 flex justify-end space-x-1 text-sm animate-pulse">
+          <div className="max-w-2xl lg:max-w-5xl mx-auto px-4 pt-3 flex justify-end space-x-1 text-sm animate-pulse">
             <span>🌺</span>
             <span className="text-pink-500 font-extrabold text-xs">NEÓN LIVE</span>
             <span>⚡</span>
@@ -174,7 +174,7 @@ export default function PublicSalonPage({
       case 'boutique-rosa':
       default:
         return (
-          <div className="max-w-2xl mx-auto px-4 pt-3 flex justify-end space-x-1 text-sm">
+          <div className="max-w-2xl lg:max-w-5xl mx-auto px-4 pt-3 flex justify-end space-x-1 text-sm">
             <span>🌸</span>
             <span>🌺</span>
             <span>🌸</span>
@@ -212,7 +212,7 @@ export default function PublicSalonPage({
       {/* Decorative preset indicators from original image top corner */}
       {!isMinimal && renderUpperDecoration()}
 
-      <main className="max-w-2xl mx-auto px-4 mt-1 space-y-6">
+      <main className="max-w-2xl lg:max-w-5xl mx-auto px-4 mt-1 space-y-6">
         
         {/* 2. Salon Main Brand Card */}
         <div className={`relative bg-white mt-12 text-center overflow-hidden transition-all ${
@@ -437,7 +437,7 @@ export default function PublicSalonPage({
         </div>
 
         {/* 6. Active Category Items Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <AnimatePresence mode="wait">
             {(() => {
               const prodMap: Record<string, string> = { 'Promos': 'Promo', 'Productos': 'Productos', 'Destacados': 'Destacados', 'Lo más vistos': 'Lo más vistos' };

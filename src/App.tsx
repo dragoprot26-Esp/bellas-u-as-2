@@ -152,14 +152,12 @@ export default function App() {
   if (salon) {
     return (
       <div className="min-h-screen bg-white text-gray-900">
-        <div className="max-w-4xl mx-auto bg-white min-h-screen shadow-xl">
-          <PublicSalonPage
-            salon={salon}
-            onOpenBooking={handleOpenBooking}
-            onNavigateToAdmin={() => setIsAdminMode(true)}
-            onUpdateSalon={handleUpdateSalon}
-          />
-        </div>
+        <PublicSalonPage
+          salon={salon}
+          onOpenBooking={handleOpenBooking}
+          onNavigateToAdmin={() => setIsAdminMode(true)}
+          onUpdateSalon={handleUpdateSalon}
+        />
 
         {showBooking && (
           <BookingWizard

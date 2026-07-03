@@ -33,7 +33,7 @@ export default function PublicSalonPage({
   onNavigateToAdmin,
   onUpdateSalon
 }: PublicSalonPageProps) {
-  const [activeCategory, setActiveCategory] = useState<'Nuevos' | 'Elegidos' | 'Galería' | 'Productos' | 'Promos' | 'Ofertas' | 'Servicios'>('Nuevos');
+  const [activeCategory, setActiveCategory] = useState<string>('Nuevos');
   const [showMap, setShowMap] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -123,11 +123,13 @@ export default function PublicSalonPage({
   const categoryNames: Record<string, string> = {
     'Nuevos': '🌸 Nuevos modelos',
     'Elegidos': '⭐ Los más elegidos',
-    'Galería': '🖼️ Galería',
-    'Productos': '🧴 Productos',
+    'Destacados': '💖 Destacados',
+    'Lo más vistos': '🔥 Lo más vistos',
     'Promos': '🎁 Promos',
     'Ofertas': '🏷️ Ofertas',
+    'Productos': '🧴 Productos',
     'Servicios': '💅 Servicios',
+    'Galería': '🖼️ Galería',
   };
 
   // Filter salon services based on category state, defaulting undefined/falsy category to 'Servicios'
@@ -437,24 +439,22 @@ export default function PublicSalonPage({
         {/* 6. Active Category Items Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <AnimatePresence mode="wait">
-            {['Promos', 'Productos', 'Ofertas'].includes(activeCategory) ? (
-              (() => {
-                const getProductsToRender = () => {
-                  if (activeCategory === 'Promos') return salon.products?.filter(p => p.category === 'Promo') || [];
-                  if (activeCategory === 'Productos') return salon.products?.filter(p => p.category === 'Productos') || [];
-                  return salon.products?.filter(p => p.category === 'Lo más vistos' || p.category === 'Destacados') || [];
-                };
-                const productsToRender = getProductsToRender();
-                if (productsToRender.length === 0) {
-                  return (
-                    <div className="col-span-full py-16 text-center text-gray-400 space-y-2">
-                      <span className="text-4xl block">🛍️</span>
-                      <p className="text-sm font-bold">¡Próximamente más productos en esta sección!</p>
-                      <p className="text-xs text-gray-500">Estamos preparando las mejores novedades para vos.</p>
-                    </div>
-                  );
-                }
-                return productsToRender.map((product, idx) => (
+            {(() => {
+              const prodMap: Record<string, string> = { 'Promos': 'Promo', 'Productos': 'Productos', 'Destacados': 'Destacados', 'Lo más vistos': 'Lo más vistos' };
+              const wantProd = prodMap[activeCategory];
+              const productsToRender = wantProd ? (salon.products?.filter(p => p.category === wantProd) || []) : [];
+              const servicesToRender = salon.services?.filter(s => (s.category || 'Servicios') === activeCategory) || [];
+              if (productsToRender.length === 0 && servicesToRender.length === 0) {
+                return (
+                  <div className="col-span-full py-16 text-center text-gray-400 space-y-2">
+                    <span className="text-4xl block">🛍️</span>
+                    <p className="text-sm font-bold">¡Próximamente más novedades en esta sección!</p>
+                    <p className="text-xs text-gray-500">Estamos preparando lo mejor para vos.</p>
+                  </div>
+                );
+              }
+              return (<>
+                {productsToRender.map((product, idx) => (
                   <motion.div
                     key={product.id}
                     initial={{ opacity: 0, y: 15 }}
@@ -538,10 +538,8 @@ export default function PublicSalonPage({
                       </div>
                     </div>
                   </motion.div>
-                ));
-              })()
-            ) : filteredServices.length > 0 ? (
-              filteredServices.map((service, index) => (
+                ))}
+                {servicesToRender.map((service, index) => (
                 <motion.div
                   key={service.id}
                   initial={{ opacity: 0, y: 15 }}
@@ -687,13 +685,9 @@ export default function PublicSalonPage({
                     </div>
                   </div>
                 </motion.div>
-              ))
-            ) : (
-              <div className="col-span-full py-12 text-center text-gray-400 space-y-2">
-                <Sparkles className="w-8 h-8 text-gray-300 mx-auto" />
-                <p className="text-sm font-medium">No se encontraron servicios disponibles en esta categoría.</p>
-              </div>
-            )}
+              ))}
+              </>);
+            })()}
           </AnimatePresence>
         </div>
 

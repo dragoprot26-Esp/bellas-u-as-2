@@ -46,7 +46,18 @@ export default function PublicSalonPage({
   const [checkoutName, setCheckoutName] = useState('');
   const [checkoutPhone, setCheckoutPhone] = useState('+54 9 ');
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [checkoutEmail, setCheckoutEmail] = useState('');
   const [activeOrderCreated, setActiveOrderCreated] = useState<ProductOrder | null>(null);
+
+  const pedidoMensaje = (o: ProductOrder) =>
+    `🛍️ *Pedido en ${salon.name}*\n\n` +
+    `🎟️ *Código de retiro:* ${o.pickupCode}\n` +
+    o.items.map(it => `• ${it.quantity}x ${it.name}`).join('\n') + `\n` +
+    `💵 *Total:* $${o.totalPrice.toLocaleString('es-AR')}\n` +
+    `📍 *Retirar en:* ${salon.address}\n\n` +
+    `Mostrá este código al retirar. ¡Gracias!`;
+  const waPedido = (o: ProductOrder) => `https://wa.me/${(o.clientPhone || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(pedidoMensaje(o))}`;
+  const mailPedido = (o: ProductOrder) => `mailto:${checkoutEmail}?subject=${encodeURIComponent('Tu pedido en ' + salon.name)}&body=${encodeURIComponent(pedidoMensaje(o))}`;
 
   // Cart Handlers
   const handleAddToCart = (product: ProductItem) => {
@@ -1044,6 +1055,16 @@ export default function PublicSalonPage({
                         className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-hidden focus:ring-2 focus:ring-pink-500/20"
                       />
                     </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">EMAIL (opcional, para recibir tu código)</label>
+                      <input
+                        type="email"
+                        placeholder="ejemplo@gmail.com"
+                        value={checkoutEmail}
+                        onChange={(e) => setCheckoutEmail(e.target.value)}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-hidden focus:ring-2 focus:ring-pink-500/20"
+                      />
+                    </div>
                   </div>
 
                   <div className="bg-pink-50/50 border border-pink-100 p-3.5 rounded-2xl space-y-1.5">
@@ -1142,6 +1163,26 @@ export default function PublicSalonPage({
 
               <div className="bg-amber-50 text-amber-800 p-3 rounded-xl border border-amber-100/50 text-[10px] font-medium leading-relaxed">
                 📸 <strong>¡Importante!</strong> Tomá una captura de pantalla de este ticket o anotá tu código para presentarlo al retirar por el local.
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-[11px] font-bold text-gray-500 text-center">📩 Recibí tu código por:</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <a
+                    href={waPedido(activeOrderCreated)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="py-3 bg-[#25D366] hover:bg-[#1ebd59] text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5"
+                  >
+                    <span>📲</span><span>WhatsApp</span>
+                  </a>
+                  <a
+                    href={mailPedido(activeOrderCreated)}
+                    className="py-3 bg-sky-500 hover:bg-sky-600 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5"
+                  >
+                    <span>✉️</span><span>Email</span>
+                  </a>
+                </div>
               </div>
 
               <button

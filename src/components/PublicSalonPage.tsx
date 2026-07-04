@@ -714,7 +714,8 @@ export default function PublicSalonPage({
           </div>
         </div>
 
-        {/* 3b. Referral & Friend Share Section - High Fidelity */}
+        {/* 3b. Referral & Friend Share Section — habilitado por el admin */}
+        {salon.referralEnabled && (
         <div className={`p-6 space-y-4 transition-all ${
           isMinimal 
             ? 'bg-white rounded-none border border-neutral-200 shadow-none' 
@@ -756,6 +757,7 @@ export default function PublicSalonPage({
             </button>
           </div>
         </div>
+        )}
 
         {/* 8. Professional Salon Footer */}
         <footer className={`text-center space-y-4 border-t ${

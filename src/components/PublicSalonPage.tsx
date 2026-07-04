@@ -812,7 +812,12 @@ export default function PublicSalonPage({
               {/* QR Code Graphic */}
               <div className="p-4 bg-gray-50 border border-gray-100 rounded-2xl flex flex-col items-center justify-center space-y-2">
                 <div className="p-2.5 bg-white rounded-xl shadow-inner">
-                  <QrCode className="w-32 h-32 text-gray-900" />
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(salon.id ? window.location.origin + '/?codigo=' + salon.id : window.location.href)}`}
+                    alt="QR del salón"
+                    className="w-32 h-32"
+                    referrerPolicy="no-referrer"
+                  />
                 </div>
                 <span className="text-[10px] font-mono font-medium text-gray-400">ESCANEÁ PARA RESERVAR EN TU CELULAR</span>
               </div>

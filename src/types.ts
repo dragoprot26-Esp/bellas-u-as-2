@@ -107,6 +107,7 @@ export interface Appointment {
   status: AppointmentStatus;
   notes?: string;
   createdAt: string;
+  code?: string;
 }
 
 export interface ClientProfile {

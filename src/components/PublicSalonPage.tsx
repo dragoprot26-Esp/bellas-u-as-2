@@ -240,18 +240,7 @@ export default function PublicSalonPage({
               )}
             </>
           )}
-          {/* Centered Avatar floating half-above */}
-          <div className={`absolute left-1/2 -translate-x-1/2 ${salon.coverImage ? 'top-28 -translate-y-1/2' : 'top-0 -translate-y-1/2'} z-10`}>
-            <div className={`w-24 h-24 ${
-              isMinimal 
-                ? 'rounded-none bg-neutral-900 text-white border-2 border-neutral-100' 
-                : `rounded-full ${salon.colorTheme.primary} border-4 border-white shadow-md transform hover:rotate-12 transition-transform duration-300`
-            } flex items-center justify-center text-4xl`}>
-              {salon.logo === '🌸' ? '💅' : salon.logo}
-            </div>
-          </div>
-
-          <div className={`pt-12 ${isMinimal ? 'space-y-6' : 'space-y-4'} ${salon.coverImage ? 'mt-8' : ''}`}>
+          <div className={`pt-6 ${isMinimal ? 'space-y-6' : 'space-y-4'} ${salon.coverImage ? 'mt-8' : ''}`}>
             <div>
               {/* Sursive Elegant Font feel for main title */}
               <h1 className={`tracking-tight ${

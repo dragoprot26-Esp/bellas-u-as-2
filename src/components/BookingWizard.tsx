@@ -42,6 +42,7 @@ export default function BookingWizard({
   const [phone, setPhone] = useState('+54 9 ');
   const [email, setEmail] = useState('');
   const [notes, setNotes] = useState('');
+  const isImageUrl = (img: string) => !!img && (img.startsWith('http') || img.startsWith('data:'));
 
   // Generation of next 7 days for selection
   const getNextDays = () => {
@@ -137,8 +138,12 @@ export default function BookingWizard({
       >
         {/* Banner header inside modal */}
         <div className={`p-6 ${salon.colorTheme.primary} text-white flex justify-between items-center relative`}>
-          <div className="absolute top-0 right-0 p-4 opacity-10 text-8xl font-black pointer-events-none">
-            {salon.logo}
+          <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+            {isImageUrl(salon.logo) ? (
+              <img src={salon.logo} alt="" className="w-20 h-20 object-contain" referrerPolicy="no-referrer" />
+            ) : (
+              <span className="text-8xl font-black">{salon.logo}</span>
+            )}
           </div>
           <div>
             <span className="text-xs tracking-wider uppercase font-semibold text-white/80">Reservar Turno</span>
@@ -209,7 +214,11 @@ export default function BookingWizard({
                       }`}
                     >
                       <div className="flex items-center space-x-3">
-                        <span className="text-2xl p-2 bg-gray-100 rounded-xl">{service.image}</span>
+                        {isImageUrl(service.image) ? (
+                          <img src={service.image} alt={service.name} className="w-11 h-11 rounded-xl object-cover flex-shrink-0" referrerPolicy="no-referrer" />
+                        ) : (
+                          <span className="text-2xl p-2 bg-gray-100 rounded-xl">{service.image}</span>
+                        )}
                         <div>
                           <div className="font-semibold text-gray-900 flex items-center gap-2">
                             {service.name}
@@ -309,7 +318,11 @@ export default function BookingWizard({
                       }`}
                     >
                       <div className="flex items-center space-x-3">
-                        <span className="text-3xl p-2 bg-pink-50 rounded-2xl">{staff.image}</span>
+                        {isImageUrl(staff.image) ? (
+                          <img src={staff.image} alt={staff.name} className="w-12 h-12 rounded-2xl object-cover flex-shrink-0" referrerPolicy="no-referrer" />
+                        ) : (
+                          <span className="text-3xl p-2 bg-pink-50 rounded-2xl">{staff.image}</span>
+                        )}
                         <div>
                           <div className="font-semibold text-gray-900 flex items-center gap-1.5">
                             {staff.name}
@@ -521,7 +534,11 @@ export default function BookingWizard({
                       <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">SALÓN</span>
                       <h5 className={`font-bold text-sm ${salon.colorTheme.textPrimary}`}>{salon.name}</h5>
                     </div>
-                    <span className="text-2xl">{salon.logo}</span>
+                    {isImageUrl(salon.logo) ? (
+                      <img src={salon.logo} alt="" className="w-8 h-8 rounded-md object-cover" referrerPolicy="no-referrer" />
+                    ) : (
+                      <span className="text-2xl">{salon.logo}</span>
+                    )}
                   </div>
 
                   {/* Ticket Details */}

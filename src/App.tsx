@@ -168,13 +168,6 @@ export default function App() {
           />
         )}
 
-        {/* Instalar PWA */}
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-slate-900/90 backdrop-blur-md py-2.5 px-4 rounded-2xl border border-slate-800 shadow-2xl flex items-center space-x-3 max-w-[340px]">
-          <div className="p-1.5 bg-pink-500/10 text-pink-400 rounded-xl"><Sparkles className="w-4 h-4" /></div>
-          <span className="text-xs text-slate-100 font-bold">Instalá {salon.name} en tu celular</span>
-          <button onClick={() => setShowPwaDialog(true)} className="py-1.5 px-3 bg-pink-500 hover:bg-pink-600 text-white font-extrabold text-[10px] rounded-lg">Instalar</button>
-        </div>
-
         <PwaDialog show={showPwaDialog} name={salon.name} onClose={() => setShowPwaDialog(false)} onDone={() => { setShowPwaDialog(false); triggerToast('Seguí los pasos para agregar el ícono a tu inicio.'); }} />
         <Toast msg={toastMessage} />
       </div>

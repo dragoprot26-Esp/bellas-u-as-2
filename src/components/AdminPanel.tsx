@@ -1861,6 +1861,18 @@ export default function AdminPanel({
                     />
                   </div>
 
+                  <div className="md:col-span-2">
+                    <label className="flex items-center gap-2.5 cursor-pointer select-none bg-slate-900/60 border border-slate-800 rounded-xl p-3">
+                      <input
+                        type="checkbox"
+                        checked={!!activeSalon.referralEnabled}
+                        onChange={(e) => onUpdateSalon({ ...activeSalon, referralEnabled: e.target.checked })}
+                        className="w-4 h-4 accent-pink-500"
+                      />
+                      <span className="text-slate-200 font-semibold text-sm">🎟️ Mostrar botón de <strong>Referidos</strong> en la página pública</span>
+                    </label>
+                  </div>
+
                   <div>
                     <label className="block text-slate-400 font-semibold mb-1">E-mail Administrativo</label>
                     <input 

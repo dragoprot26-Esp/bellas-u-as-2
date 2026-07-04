@@ -43,6 +43,7 @@ export default function BookingWizard({
   const [email, setEmail] = useState('');
   const [notes, setNotes] = useState('');
   const isImageUrl = (img: string) => !!img && (img.startsWith('http') || img.startsWith('data:'));
+  const [bookingCode, setBookingCode] = useState('');
 
   // Generation of next 7 days for selection
   const getNextDays = () => {
@@ -93,6 +94,9 @@ export default function BookingWizard({
     e.preventDefault();
     if (!name || !phone || !email) return;
 
+    const codigo = 'BU-' + Math.random().toString(36).slice(2, 7).toUpperCase();
+    setBookingCode(codigo);
+
     const newBooking: Appointment = {
       id: `apt-${Date.now()}`,
       salonId: salon.id,
@@ -109,26 +113,26 @@ export default function BookingWizard({
       time: selectedTime,
       status: 'Confirmado', // Real-time confirm for perfect UX
       notes: notes,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      code: codigo
     };
 
     onBookingComplete(newBooking);
     setStep(5); // Show confirmation ticket
   };
 
-  // WhatsApp share link generator
-  const getWhatsAppShareLink = () => {
-    const text = encodeURIComponent(
-      `¡Hola! Confirmé mi turno en *${salon.name}*:\n\n` +
-      `💅 *Servicio:* ${selectedService?.name}\n` +
-      `👩‍🎨 *Profesional:* ${selectedStaff?.name}\n` +
-      `📅 *Fecha:* ${selectedDate}\n` +
-      `🕒 *Hora:* ${selectedTime} hs\n` +
-      `📍 *Lugar:* ${salon.address}\n\n` +
-      `¡Nos vemos pronto!`
-    );
-    return `https://wa.me/${salon.phone.replace(/[^0-9]/g, '')}?text=${text}`;
-  };
+  // Mensaje con el código del turno para el cliente
+  const codigoMensaje = () =>
+    `✅ *Turno confirmado en ${salon.name}*\n\n` +
+    `🎟️ *Tu código:* ${bookingCode}\n` +
+    `💅 *Servicio:* ${selectedService?.name}\n` +
+    `👩‍🎨 *Profesional:* ${selectedStaff?.name}\n` +
+    `📅 *Fecha:* ${selectedDate}\n` +
+    `🕒 *Hora:* ${selectedTime} hs\n` +
+    `📍 *Lugar:* ${salon.address}\n\n` +
+    `Mostrá este código al llegar. ¡Nos vemos!`;
+  const waCliente = () => `https://wa.me/${(phone || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(codigoMensaje())}`;
+  const mailCliente = () => `mailto:${email}?subject=${encodeURIComponent('Tu turno en ' + salon.name)}&body=${encodeURIComponent(codigoMensaje())}`;
 
   return (
     <div id="booking-modal" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
@@ -570,8 +574,8 @@ export default function BookingWizard({
                   {/* QR Code and Checkin */}
                   <div className="mt-4 flex items-center justify-between bg-white p-3 rounded-xl border border-gray-100">
                     <div>
-                      <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider block">CÓDIGO DE CHECK-IN</span>
-                      <span className="text-[10px] text-gray-600 font-mono font-medium">BELLAS-{Date.now().toString().slice(-4)}</span>
+                      <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider block">CÓDIGO DE TURNO</span>
+                      <span className="text-sm text-gray-900 font-mono font-black tracking-wider">{bookingCode}</span>
                     </div>
                     <div className="bg-gray-100 p-1.5 rounded-lg">
                       <QrCode className="w-7 h-7 text-gray-800" />
@@ -579,20 +583,30 @@ export default function BookingWizard({
                   </div>
                 </div>
 
-                {/* Social Share & Close */}
+                {/* Recibir el código: el cliente elige el canal */}
                 <div className="flex flex-col gap-2 pt-2 max-w-xs mx-auto">
-                  <a 
-                    href={getWhatsAppShareLink()}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full py-3 bg-[#25D366] hover:bg-[#1ebd59] text-white rounded-xl font-bold text-sm flex items-center justify-center space-x-2 shadow-sm transition-all transform hover:-translate-y-0.5"
-                  >
-                    <MessageSquare className="w-4 h-4" />
-                    <span>Compartir por WhatsApp</span>
-                  </a>
+                  <p className="text-xs font-bold text-gray-500">📩 Recibí tu código por:</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <a
+                      href={waCliente()}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="py-3 bg-[#25D366] hover:bg-[#1ebd59] text-white rounded-xl font-bold text-xs flex items-center justify-center space-x-1.5 shadow-sm transition-all"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      <span>WhatsApp</span>
+                    </a>
+                    <a
+                      href={mailCliente()}
+                      className="py-3 bg-sky-500 hover:bg-sky-600 text-white rounded-xl font-bold text-xs flex items-center justify-center space-x-1.5 shadow-sm transition-all"
+                    >
+                      <span>✉️</span>
+                      <span>Email</span>
+                    </a>
+                  </div>
                   <button 
                     onClick={onClose}
-                    className="w-full py-3 bg-gray-150 hover:bg-gray-200 text-gray-800 rounded-xl font-bold text-sm transition-colors"
+                    className="w-full py-3 bg-gray-150 hover:bg-gray-200 text-gray-800 rounded-xl font-bold text-sm transition-colors mt-1"
                   >
                     Finalizar y Cerrar
                   </button>

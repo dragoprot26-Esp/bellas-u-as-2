@@ -102,16 +102,59 @@ export default function App() {
     setAppointments([]); setClients([]);
   };
 
-  // Guardado en la nube (admin) con debounce
+  // Guardado en la nube (admin) con debounce + traer-antes-de-guardar
+  // (para no pisar turnos/pedidos que entraron desde la página pública).
   const saveTimer = useRef<any>(null);
   useEffect(() => {
     if (!isAdminMode || !cloudCode || isPublicView || !salon) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => {
-      cloudSave(cloudCode, { salon, appointments, clients });
+    saveTimer.current = setTimeout(async () => {
+      const remote = await cloudLoad(cloudCode);
+      let apps = appointments;
+      let sal: Salon = salon;
+      if (remote) {
+        if (Array.isArray(remote.appointments)) {
+          const ids = new Set(appointments.map(a => a.id));
+          const nuevos = remote.appointments.filter((a: any) => a && a.id && !ids.has(a.id));
+          if (nuevos.length) { apps = [...nuevos, ...appointments]; setAppointments(apps); }
+        }
+        const remOrders = remote.salon && remote.salon.orders;
+        if (Array.isArray(remOrders)) {
+          const oids = new Set((salon.orders || []).map(o => o.id));
+          const nuevosO = remOrders.filter((o: any) => o && o.id && !oids.has(o.id));
+          if (nuevosO.length) { sal = { ...salon, orders: [...nuevosO, ...(salon.orders || [])] }; setSalon(sal); }
+        }
+      }
+      cloudSave(cloudCode, { salon: sal, appointments: apps, clients });
     }, 1200);
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
   }, [salon, appointments, clients, isAdminMode, cloudCode, isPublicView]);
+
+  // Campanita: sondeo de turnos y pedidos nuevos (cada 15s) para el panel
+  useEffect(() => {
+    if (!isAdminMode || !cloudCode || isPublicView) return;
+    const iv = setInterval(async () => {
+      const remote = await cloudLoad(cloudCode);
+      if (!remote) return;
+      if (Array.isArray(remote.appointments)) {
+        setAppointments(prev => {
+          const ids = new Set(prev.map(a => a.id));
+          const nuevos = (remote.appointments as any[]).filter((a: any) => a && a.id && !ids.has(a.id));
+          return nuevos.length ? [...nuevos, ...prev] : prev;
+        });
+      }
+      const remOrders = remote.salon && remote.salon.orders;
+      if (Array.isArray(remOrders)) {
+        setSalon(prev => {
+          if (!prev) return prev;
+          const oids = new Set((prev.orders || []).map(o => o.id));
+          const nuevosO = (remOrders as any[]).filter((o: any) => o && o.id && !oids.has(o.id));
+          return nuevosO.length ? { ...prev, orders: [...nuevosO, ...(prev.orders || [])] } : prev;
+        });
+      }
+    }, 15000);
+    return () => clearInterval(iv);
+  }, [isAdminMode, cloudCode, isPublicView]);
 
   const handleBookingComplete = (newBooking: Appointment) => {
     const b = { ...newBooking, salonId: cloudCode || newBooking.salonId };

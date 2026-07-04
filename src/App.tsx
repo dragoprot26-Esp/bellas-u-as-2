@@ -69,7 +69,24 @@ export default function App() {
     const remote = await cloudLoad(code);
     const vacio = !remote || (!remote.salon && !remote.appointments);
     if (vacio) {
-      const base: Salon = { ...(INITIAL_SALONS[0] as Salon), id: code };
+      const base: Salon = {
+        ...(INITIAL_SALONS[0] as Salon),
+        id: code,
+        name: 'Mi Salón de Uñas',
+        slogan: 'Tus manos, nuestra obra de arte 💅',
+        address: '',
+        phone: '+54 9 ',
+        email: '',
+        rating: 5,
+        reviewsCount: 0,
+        coverImage: '',
+        services: [],
+        staff: [],
+        products: [],
+        orders: [],
+        collaborators: [],
+        referralEnabled: false,
+      };
       setSalon(base); setAppointments([]); setClients([]);
       await cloudSave(code, { salon: base, appointments: [], clients: [] });
     } else {

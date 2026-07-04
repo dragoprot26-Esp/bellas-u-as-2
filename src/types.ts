@@ -60,6 +60,7 @@ export interface Salon {
   collaborators?: Array<{ id: string; name: string; username: string; password: string }>;
   products?: ProductItem[];
   orders?: ProductOrder[];
+  referralEnabled?: boolean;
 }
 
 export interface ProductItem {

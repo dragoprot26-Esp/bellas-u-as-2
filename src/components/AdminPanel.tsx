@@ -44,6 +44,7 @@ import {
   validarLicencia, asegurarCuentaSeguraDueno, asegurarCuentaSeguraColab,
   estaLogueado, signOutGlobal,
 } from '../cloud';
+import { bioSupported, bioEnabled, bioEnable, bioLogin } from '../biometric';
 
 interface AdminPanelProps {
   salons: Salon[];
@@ -85,6 +86,16 @@ export default function AdminPanel({
   const [loginRole, setLoginRole] = useState<'admin' | 'colaborador'>('admin');
   const [loginLoading, setLoginLoading] = useState(false);
 
+  // Ingreso biométrico (huella / Face ID) en este dispositivo
+  const [bioAvail, setBioAvail] = useState(false);
+  const [bioOn, setBioOn] = useState(false);
+  const [bioCheck, setBioCheck] = useState(false);
+
+  useEffect(() => {
+    bioSupported().then(setBioAvail);
+    setBioOn(bioEnabled());
+  }, []);
+
   const [activeTab, setActiveTab] = useState<'overview' | 'appointments' | 'crm' | 'reports' | 'settings' | 'collaborators' | 'products_catalog' | 'services_catalog' | 'orders_management'>('overview');
 
   // Products and Catalog form states
@@ -108,6 +119,20 @@ export default function AdminPanel({
   const [newSerCompText, setNewSerCompText] = useState('');
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
 
+  // Login real reutilizable (formulario y huella)
+  const doLogin = async (code: string, usuario: string, clave: string, role: 'admin' | 'colaborador') => {
+    const lic = await validarLicencia(code);
+    if (!lic) return { ok: false, msg: 'Licencia inválida o vencida.' };
+    const r = role === 'admin'
+      ? await asegurarCuentaSeguraDueno(usuario, clave, code)
+      : await asegurarCuentaSeguraColab(usuario, clave, code);
+    if (!r.ok) return { ok: false, msg: r.msg || 'No se pudo iniciar sesión.' };
+    if (onLoggedIn) await onLoggedIn(code);
+    setCurrentUser({ id: usuario, name: usuario, username: usuario, role });
+    setActiveTab(role === 'admin' ? 'overview' : 'appointments');
+    return { ok: true };
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
@@ -118,16 +143,29 @@ export default function AdminPanel({
     if (!usuario) { setAuthError('Ingresá tu usuario.'); return; }
     if (clave.length < 6) { setAuthError('La contraseña debe tener 6 caracteres o más.'); return; }
     setLoginLoading(true);
-    const lic = await validarLicencia(code);
-    if (!lic) { setLoginLoading(false); setAuthError('Licencia inválida o vencida.'); return; }
-    const r = loginRole === 'admin'
-      ? await asegurarCuentaSeguraDueno(usuario, clave, code)
-      : await asegurarCuentaSeguraColab(usuario, clave, code);
+    const r = await doLogin(code, usuario, clave, loginRole);
     if (!r.ok) { setLoginLoading(false); setAuthError(r.msg || 'No se pudo iniciar sesión.'); return; }
-    if (onLoggedIn) await onLoggedIn(code);
-    setCurrentUser({ id: usuario, name: usuario, username: usuario, role: loginRole });
-    setActiveTab(loginRole === 'admin' ? 'overview' : 'appointments');
+    if (bioCheck && bioAvail) {
+      try { await bioEnable({ codigo: code, usuario, password: clave, role: loginRole }); setBioOn(true); }
+      catch (e) { /* si la huella falla, igual entra */ }
+    }
     setLoginLoading(false);
+  };
+
+  // Ingreso con huella / Face ID: recupera las credenciales guardadas y loguea
+  const handleBioLogin = async () => {
+    setAuthError('');
+    setLoginLoading(true);
+    try {
+      const creds = await bioLogin();
+      if (!creds) { setAuthError('No se pudo leer la huella. Ingresá con tus datos.'); return; }
+      const r = await doLogin(creds.codigo, creds.usuario, creds.password, creds.role);
+      if (!r.ok) { setAuthError((r.msg || 'No se pudo entrar') + ' — volvé a ingresar tus datos.'); return; }
+    } catch (err: any) {
+      setAuthError('Huella cancelada o no disponible en este dispositivo.');
+    } finally {
+      setLoginLoading(false);
+    }
   };
 
   const handleLogout = () => {
@@ -670,6 +708,24 @@ export default function AdminPanel({
             <p className="text-xs text-slate-400">Ingresá con tu licencia <strong className="text-pink-400">BELL</strong></p>
           </div>
 
+          {bioAvail && bioOn && (
+            <div>
+              <button
+                type="button"
+                onClick={handleBioLogin}
+                disabled={loginLoading}
+                className="w-full py-3.5 bg-gradient-to-r from-fuchsia-500 to-pink-600 hover:from-fuchsia-600 hover:to-pink-700 disabled:opacity-60 text-white font-black text-xs rounded-xl shadow-lg transition-all transform active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Smartphone className="w-4 h-4" /> Ingresar con huella / Face ID
+              </button>
+              <div className="flex items-center gap-2 my-3">
+                <span className="flex-1 h-px bg-slate-800"></span>
+                <span className="text-[10px] text-slate-500 uppercase">o con tus datos</span>
+                <span className="flex-1 h-px bg-slate-800"></span>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleLogin} className="space-y-4">
             {authError && (
               <div className="p-3.5 bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-xl font-bold">
@@ -719,6 +775,21 @@ export default function AdminPanel({
                 required
               />
             </div>
+
+            {bioAvail && !bioOn && (
+              <label className="flex items-start gap-2 text-[11px] text-slate-300 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800 cursor-pointer text-left">
+                <input
+                  type="checkbox"
+                  checked={bioCheck}
+                  onChange={(e) => setBioCheck(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 accent-pink-600"
+                />
+                <span>
+                  🔒 <strong className="text-slate-200">Activar ingreso con huella / Face ID</strong> en este dispositivo,
+                  para no volver a tipear las credenciales.
+                </span>
+              </label>
+            )}
 
             <button
               type="submit"

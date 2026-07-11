@@ -784,8 +784,16 @@ export default function PublicSalonPage({
             <a href={`tel:${salon.phone}`} className={isMinimal ? "hover:text-black transition-colors" : `hover:${salon.colorTheme.textAccent} transition-colors`}>📞 {salon.phone}</a>
             <a href={`mailto:${salon.email}`} className={isMinimal ? "hover:text-black transition-colors" : `hover:${salon.colorTheme.textAccent} transition-colors`}>✉️ {salon.email}</a>
           </div>
-          <div className={`pt-2 border-t max-w-xs mx-auto ${isMinimal ? 'border-neutral-200/40 text-[9px]' : 'border-gray-50 text-gray-300'}`}>
-            Hecho con 💖 · CyC Apps
+          <div className={`pt-2 border-t max-w-xs mx-auto flex flex-wrap items-center justify-center gap-x-2 gap-y-1 ${isMinimal ? 'border-neutral-200/40 text-[9px]' : 'border-gray-50 text-gray-300'}`}>
+            <span>Hecho con 💖 · CyC Apps</span>
+            <a
+              href="https://vitrina-cyc.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-pink-500/10 text-pink-400 hover:bg-pink-500/20 border border-pink-400/30 transition"
+            >
+              🛍️ Visitá la Vitrina
+            </a>
           </div>
         </footer>
       </main>

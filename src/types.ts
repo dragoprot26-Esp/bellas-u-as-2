@@ -61,6 +61,16 @@ export interface Salon {
   products?: ProductItem[];
   orders?: ProductOrder[];
   referralEnabled?: boolean;
+  reviews?: SalonReview[];
+}
+
+export interface SalonReview {
+  id: string;
+  name: string;
+  text: string;
+  rating: number;      // 1..5
+  date: string;
+  approved: boolean;   // el dueño aprueba antes de mostrarla en público
 }
 
 export interface ProductItem {

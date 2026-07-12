@@ -7,7 +7,7 @@ import AdminPanel from './components/AdminPanel';
 import { Sparkles, Download, Check, X, KeyRound } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  bellPublica, bellAgregarCita, cloudLoad, cloudSave,
+  bellPublica, bellAgregarCita, bellAgregarResena, cloudLoad, cloudSave,
   bellHistListar, bellHistRestaurar,
   estaLogueado, miMembresia, signOutGlobal,
 } from './cloud';
@@ -122,6 +122,17 @@ export default function App() {
     return true;
   };
 
+  // Reseña dejada por un cliente en la página pública (queda pendiente de aprobación)
+  const handleSubmitReview = async (r: { name: string; text: string; rating: number }): Promise<boolean> => {
+    if (!cloudCode) return false;
+    const resena = {
+      id: `rev-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      name: r.name, text: r.text, rating: r.rating,
+      date: new Date().toISOString(), approved: false,
+    };
+    return await bellAgregarResena(cloudCode, resena);
+  };
+
   // Guardado en la nube (admin) con debounce + traer-antes-de-guardar
   // (para no pisar turnos/pedidos que entraron desde la página pública).
   const saveTimer = useRef<any>(null);
@@ -142,7 +153,13 @@ export default function App() {
         if (Array.isArray(remOrders)) {
           const oids = new Set((salon.orders || []).map(o => o.id));
           const nuevosO = remOrders.filter((o: any) => o && o.id && !oids.has(o.id));
-          if (nuevosO.length) { sal = { ...salon, orders: [...nuevosO, ...(salon.orders || [])] }; setSalon(sal); }
+          if (nuevosO.length) { sal = { ...sal, orders: [...nuevosO, ...(sal.orders || [])] }; setSalon(sal); }
+        }
+        const remReviews = remote.salon && (remote.salon as any).reviews;
+        if (Array.isArray(remReviews)) {
+          const rids = new Set(((sal.reviews as any[]) || []).map((r: any) => r.id));
+          const nuevosR = remReviews.filter((r: any) => r && r.id && !rids.has(r.id));
+          if (nuevosR.length) { sal = { ...sal, reviews: [...nuevosR, ...((sal.reviews as any[]) || [])] }; setSalon(sal); }
         }
       }
       cloudSave(cloudCode, { salon: sal, appointments: apps, clients });
@@ -170,6 +187,15 @@ export default function App() {
           const oids = new Set((prev.orders || []).map(o => o.id));
           const nuevosO = (remOrders as any[]).filter((o: any) => o && o.id && !oids.has(o.id));
           return nuevosO.length ? { ...prev, orders: [...nuevosO, ...(prev.orders || [])] } : prev;
+        });
+      }
+      const remReviews = remote.salon && (remote.salon as any).reviews;
+      if (Array.isArray(remReviews)) {
+        setSalon(prev => {
+          if (!prev) return prev;
+          const rids = new Set(((prev.reviews as any[]) || []).map((r: any) => r.id));
+          const nuevosR = (remReviews as any[]).filter((r: any) => r && r.id && !rids.has(r.id));
+          return nuevosR.length ? { ...prev, reviews: [...nuevosR, ...((prev.reviews as any[]) || [])] } : prev;
         });
       }
     }, 15000);
@@ -239,6 +265,7 @@ export default function App() {
           onOpenBooking={handleOpenBooking}
           onNavigateToAdmin={() => setIsAdminMode(true)}
           onUpdateSalon={handleUpdateSalon}
+          onSubmitReview={handleSubmitReview}
         />
 
         {showBooking && (

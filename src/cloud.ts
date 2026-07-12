@@ -141,6 +141,9 @@ export async function bellAgregarCita(codigo: string, cita: any): Promise<boolea
 export async function bellAgregarPedido(codigo: string, pedido: any): Promise<boolean> {
   try { const r = await rpc('bell_agregar_pedido', { p_codigo: codigo, p_pedido: pedido }, false); return !!(r && r.ok); } catch (e) { return false; }
 }
+export async function bellAgregarResena(codigo: string, resena: any): Promise<boolean> {
+  try { const r = await rpc('bell_agregar_resena', { p_codigo: codigo, p_resena: resena }, false); return !!(r && r.ok); } catch (e) { return false; }
+}
 
 // ── Copias de seguridad / rollback ──────────────────────────────────────
 export async function bellHistListar(codigo: string): Promise<any[]> {

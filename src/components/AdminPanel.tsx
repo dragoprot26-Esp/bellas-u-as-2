@@ -59,6 +59,8 @@ interface AdminPanelProps {
   onLoggedIn?: (code: string) => void | Promise<void>;
   onLogout?: () => void;
   publicCode?: string;
+  onListBackups?: () => Promise<any[]>;
+  onRestoreBackup?: (id: number) => Promise<boolean>;
 }
 
 export default function AdminPanel({
@@ -73,8 +75,30 @@ export default function AdminPanel({
   onCloseAdmin,
   onLoggedIn,
   onLogout,
-  publicCode
+  publicCode,
+  onListBackups,
+  onRestoreBackup
 }: AdminPanelProps) {
+  // Copias de seguridad (rollback)
+  const [backups, setBackups] = useState<any[]>([]);
+  const [backupsOpen, setBackupsOpen] = useState(false);
+  const [backupsBusy, setBackupsBusy] = useState(false);
+  const cargarBackups = async () => {
+    if (!onListBackups) return;
+    setBackupsBusy(true);
+    try { setBackups(await onListBackups()); setBackupsOpen(true); }
+    finally { setBackupsBusy(false); }
+  };
+  const restaurarBackup = async (id: number) => {
+    if (!onRestoreBackup) return;
+    if (!window.confirm('¿Restaurar esta copia? Se reemplazan los datos actuales por los de esa fecha. (La versión actual queda guardada por las dudas.)')) return;
+    setBackupsBusy(true);
+    try {
+      const ok = await onRestoreBackup(id);
+      alert(ok ? '✅ Copia restaurada. Ya están cargados los datos de esa fecha.' : 'No se pudo restaurar. Probá de nuevo.');
+      if (ok) setBackupsOpen(false);
+    } finally { setBackupsBusy(false); }
+  };
   // Authentication State
   const [authUsername, setAuthUsername] = useState('');
   const [authPassword, setAuthPassword] = useState('');
@@ -2009,6 +2033,42 @@ export default function AdminPanel({
                     <strong>Atención Inquilino:</strong> Al guardar o modificar cualquier campo anterior, la base de datos local guardará la información y se reflejará en tiempo real tanto en el panel como en la pantalla pública de reservas.
                   </span>
                 </div>
+
+                {currentUser?.role === 'admin' && onListBackups && (
+                  <div className="p-5 bg-white border border-rose-100 rounded-2xl space-y-4 shadow-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2"><span>🛟</span> Copias de seguridad</h3>
+                        <p className="text-[11px] text-slate-500">Si borrás algo por error, restaurá una versión anterior de tu salón. Se guardan solas cada vez que hay cambios (se conservan las últimas 10).</p>
+                      </div>
+                      <button type="button" onClick={cargarBackups} disabled={backupsBusy}
+                        className="shrink-0 bg-rose-500 hover:bg-rose-600 text-white text-xs font-semibold px-4 py-2 rounded-xl disabled:opacity-60 cursor-pointer">
+                        {backupsBusy ? 'Cargando…' : (backupsOpen ? 'Actualizar' : 'Ver copias')}
+                      </button>
+                    </div>
+
+                    {backupsOpen && (
+                      backups.length === 0 ? (
+                        <p className="text-[11px] text-slate-400 italic">Todavía no hay copias guardadas. Se generan automáticamente cada vez que guardás cambios.</p>
+                      ) : (
+                        <div className="space-y-2 max-h-72 overflow-auto pr-1">
+                          {backups.map((b: any) => (
+                            <div key={b.id} className="flex items-center justify-between gap-3 bg-rose-50/60 border border-rose-100 rounded-xl p-3">
+                              <div className="text-xs text-slate-600">
+                                <span className="font-mono block text-slate-800">{new Date(b.guardado).toLocaleString()}</span>
+                                <span className="text-[10px] text-slate-400 font-mono">{b.servicios} servicios · {b.turnos} turnos · {b.clientes} clientes</span>
+                              </div>
+                              <button type="button" onClick={() => restaurarBackup(b.id)} disabled={backupsBusy}
+                                className="shrink-0 text-[10px] font-semibold px-3 py-1.5 rounded-lg bg-white hover:bg-rose-100 text-rose-600 border border-rose-200 disabled:opacity-60 cursor-pointer">
+                                Restaurar
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}

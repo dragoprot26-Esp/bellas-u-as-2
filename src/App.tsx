@@ -8,6 +8,7 @@ import { Sparkles, Download, Check, X, KeyRound } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   bellPublica, bellAgregarCita, cloudLoad, cloudSave,
+  bellHistListar, bellHistRestaurar,
   estaLogueado, miMembresia, signOutGlobal,
 } from './cloud';
 
@@ -96,10 +97,29 @@ export default function App() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Guardado sincrónico antes de salir: no se pierde ningún cambio reciente.
+    if (cloudCode && salon) {
+      try { await cloudSave(cloudCode, { salon, appointments, clients }); } catch (e) { /* noop */ }
+    }
     signOutGlobal();
     setIsAdminMode(false); setCloudCode(''); setSalon(null);
     setAppointments([]); setClients([]);
+  };
+
+  // Copias de seguridad: listar y restaurar
+  const handleListBackups = async () => {
+    if (!cloudCode) return [];
+    return await bellHistListar(cloudCode);
+  };
+  const handleRestoreBackup = async (id: number) => {
+    if (!cloudCode) return false;
+    const data = await bellHistRestaurar(cloudCode, id);
+    if (!data) return false;
+    if (data.salon) setSalon({ ...data.salon, id: cloudCode });
+    setAppointments(Array.isArray(data.appointments) ? data.appointments : []);
+    setClients(Array.isArray(data.clients) ? data.clients : []);
+    return true;
   };
 
   // Guardado en la nube (admin) con debounce + traer-antes-de-guardar
@@ -204,6 +224,8 @@ export default function App() {
         onLoggedIn={handleLoggedIn}
         onLogout={handleLogout}
         publicCode={cloudCode}
+        onListBackups={handleListBackups}
+        onRestoreBackup={handleRestoreBackup}
       />
     );
   }

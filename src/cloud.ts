@@ -141,3 +141,11 @@ export async function bellAgregarCita(codigo: string, cita: any): Promise<boolea
 export async function bellAgregarPedido(codigo: string, pedido: any): Promise<boolean> {
   try { const r = await rpc('bell_agregar_pedido', { p_codigo: codigo, p_pedido: pedido }, false); return !!(r && r.ok); } catch (e) { return false; }
 }
+
+// ── Copias de seguridad / rollback ──────────────────────────────────────
+export async function bellHistListar(codigo: string): Promise<any[]> {
+  try { const r = await rpc('bell_hist_listar', { p_codigo: codigo }); return Array.isArray(r) ? r : []; } catch (e) { return []; }
+}
+export async function bellHistRestaurar(codigo: string, id: number): Promise<any | null> {
+  try { const r = await rpc('bell_hist_restaurar', { p_codigo: codigo, p_id: id }); return (r && r.ok) ? r.data : null; } catch (e) { return null; }
+}

@@ -120,7 +120,7 @@ export default function AdminPanel({
     setBioOn(bioEnabled());
   }, []);
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'appointments' | 'crm' | 'reports' | 'settings' | 'collaborators' | 'products_catalog' | 'services_catalog' | 'orders_management'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'appointments' | 'crm' | 'reports' | 'settings' | 'collaborators' | 'products_catalog' | 'services_catalog' | 'orders_management' | 'reseñas'>('overview');
 
   // Products and Catalog form states
   const [newProdName, setNewProdName] = useState('');
@@ -884,20 +884,6 @@ export default function AdminPanel({
         <nav className="w-full lg:w-64 bg-slate-950 border-r border-slate-800 p-4 space-y-2 shrink-0">
           <span className="text-[10px] font-bold text-slate-500 tracking-widest uppercase block px-3 mb-2">MENÚ PRINCIPAL</span>
           
-          {currentUser?.role === 'admin' && (
-            <button
-              onClick={() => setActiveTab('overview')}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${
-                activeTab === 'overview'
-                  ? 'bg-pink-500/10 text-pink-400 border-l-4 border-pink-500'
-                  : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900'
-              }`}
-            >
-              <BarChart3 className="w-4.5 h-4.5" />
-              <span>Dashboard</span>
-            </button>
-          )}
-
           <button
             onClick={() => setActiveTab('appointments')}
             className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all ${
@@ -920,18 +906,6 @@ export default function AdminPanel({
           {currentUser?.role === 'admin' && (
             <>
               <button
-                onClick={() => setActiveTab('reports')}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${
-                  activeTab === 'reports'
-                    ? 'bg-pink-500/10 text-pink-400 border-l-4 border-pink-500'
-                    : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900'
-                }`}
-              >
-                <TrendingUp className="w-4.5 h-4.5" />
-                <span>Finanzas y Reportes</span>
-              </button>
-
-              <button
                 onClick={() => setActiveTab('crm')}
                 className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${
                   activeTab === 'crm'
@@ -941,6 +915,73 @@ export default function AdminPanel({
               >
                 <Users className="w-4.5 h-4.5" />
                 <span>Fichas de Clientes (CRM)</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('services_catalog')}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${
+                  activeTab === 'services_catalog'
+                    ? 'bg-pink-500/10 text-pink-400 border-l-4 border-pink-500'
+                    : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900'
+                }`}
+              >
+                <ClipboardList className="w-4.5 h-4.5 text-pink-400" />
+                <span>Servicios</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('products_catalog')}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${
+                  activeTab === 'products_catalog'
+                    ? 'bg-pink-500/10 text-pink-400 border-l-4 border-pink-500'
+                    : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900'
+                }`}
+              >
+                <ShoppingBag className="w-4.5 h-4.5 text-pink-400" />
+                <span>Catálogo (Promos/Productos)</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('orders_management')}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all ${
+                  activeTab === 'orders_management'
+                    ? 'bg-pink-500/10 text-pink-400 border-l-4 border-pink-500'
+                    : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <ClipboardList className="w-4.5 h-4.5 text-amber-400" />
+                  <span>Pedidos Recibidos</span>
+                </div>
+                {(activeSalon.orders?.filter(o => o.status === 'Pendiente').length || 0) > 0 && (
+                  <span className="bg-amber-500 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full">
+                    {activeSalon.orders?.filter(o => o.status === 'Pendiente').length}
+                  </span>
+                )}
+              </button>
+
+              <button
+                onClick={() => setActiveTab('overview')}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${
+                  activeTab === 'overview'
+                    ? 'bg-pink-500/10 text-pink-400 border-l-4 border-pink-500'
+                    : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900'
+                }`}
+              >
+                <BarChart3 className="w-4.5 h-4.5" />
+                <span>Dashboard</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('reports')}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${
+                  activeTab === 'reports'
+                    ? 'bg-pink-500/10 text-pink-400 border-l-4 border-pink-500'
+                    : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900'
+                }`}
+              >
+                <TrendingUp className="w-4.5 h-4.5" />
+                <span>Finanzas y Reportes</span>
               </button>
 
               <button
@@ -968,46 +1009,15 @@ export default function AdminPanel({
               </button>
 
               <button
-                onClick={() => setActiveTab('products_catalog')}
+                onClick={() => setActiveTab('reseñas')}
                 className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${
-                  activeTab === 'products_catalog'
+                  activeTab === 'reseñas'
                     ? 'bg-pink-500/10 text-pink-400 border-l-4 border-pink-500'
                     : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900'
                 }`}
               >
-                <ShoppingBag className="w-4.5 h-4.5 text-pink-400" />
-                <span>Catálogo (Promos/Productos)</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('services_catalog')}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${
-                  activeTab === 'services_catalog'
-                    ? 'bg-pink-500/10 text-pink-400 border-l-4 border-pink-500'
-                    : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900'
-                }`}
-              >
-                <ClipboardList className="w-4.5 h-4.5 text-pink-400" />
-                <span>Servicios</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('orders_management')}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all ${
-                  activeTab === 'orders_management'
-                    ? 'bg-pink-500/10 text-pink-400 border-l-4 border-pink-500'
-                    : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900'
-                }`}
-              >
-                <div className="flex items-center space-x-3">
-                  <ClipboardList className="w-4.5 h-4.5 text-amber-400" />
-                  <span>Pedidos Recibidos</span>
-                </div>
-                {(activeSalon.orders?.filter(o => o.status === 'Pendiente').length || 0) > 0 && (
-                  <span className="bg-amber-500 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full">
-                    {activeSalon.orders?.filter(o => o.status === 'Pendiente').length}
-                  </span>
-                )}
+                <span className="w-4.5 h-4.5 flex items-center justify-center">🌟</span>
+                <span>Reseñas</span>
               </button>
             </>
           )}
@@ -2069,6 +2079,60 @@ export default function AdminPanel({
                     )}
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* TAB: RESEÑAS */}
+          {activeTab === 'reseñas' && currentUser?.role === 'admin' && (
+            <div className="space-y-6 animate-fadeIn">
+              <div className="border-b border-slate-800 pb-4">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2"><span>🌟</span> Opiniones de clientes</h3>
+                <p className="text-xs text-slate-400">Aprobá las opiniones que dejan tus clientes para mostrarlas en la página pública.</p>
+              </div>
+              <div className="p-5 bg-white border border-rose-100 rounded-2xl space-y-3 shadow-sm">
+                {(() => {
+                  const revs = (activeSalon.reviews as any[]) || [];
+                  const pend = revs.filter((r: any) => !r.approved);
+                  const aprob = revs.filter((r: any) => r.approved);
+                  if (revs.length === 0) return <p className="text-[11px] text-slate-400 italic">Todavía no hay opiniones cargadas.</p>;
+                  return (
+                    <div className="space-y-3">
+                      {pend.length > 0 && (
+                        <div className="space-y-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500">Pendientes ({pend.length})</span>
+                          {pend.map((r: any) => (
+                            <div key={r.id} className="bg-amber-50 border border-amber-100 rounded-xl p-3 space-y-1.5">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-bold text-slate-700">{r.name} <span className="text-amber-500">{'★'.repeat(Math.max(1, Math.min(5, r.rating || 5)))}</span></span>
+                                <span className="text-[10px] text-slate-400 shrink-0">{r.date ? new Date(r.date).toLocaleDateString() : ''}</span>
+                              </div>
+                              <p className="text-[11px] text-slate-600 italic">“{r.text}”</p>
+                              <div className="flex gap-2 justify-end">
+                                <button onClick={() => onUpdateSalon({ ...activeSalon, reviews: ((activeSalon.reviews as any[]) || []).map((x: any) => x.id === r.id ? { ...x, approved: true } : x) })} className="text-[10px] font-bold px-3 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white cursor-pointer">✓ Aprobar</button>
+                                <button onClick={() => onUpdateSalon({ ...activeSalon, reviews: ((activeSalon.reviews as any[]) || []).filter((x: any) => x.id !== r.id) })} className="text-[10px] font-bold px-3 py-1 rounded-lg bg-white border border-red-200 text-red-500 hover:bg-red-50 cursor-pointer">🗑️ Borrar</button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {aprob.length > 0 && (
+                        <div className="space-y-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500">Publicadas ({aprob.length})</span>
+                          {aprob.map((r: any) => (
+                            <div key={r.id} className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex items-center justify-between gap-2">
+                              <div className="min-w-0">
+                                <span className="text-xs font-bold text-slate-700 block truncate">{r.name} <span className="text-amber-500">{'★'.repeat(Math.max(1, Math.min(5, r.rating || 5)))}</span></span>
+                                <p className="text-[11px] text-slate-500 italic truncate">“{r.text}”</p>
+                              </div>
+                              <button onClick={() => onUpdateSalon({ ...activeSalon, reviews: ((activeSalon.reviews as any[]) || []).filter((x: any) => x.id !== r.id) })} className="shrink-0 text-[10px] font-bold px-3 py-1 rounded-lg bg-white border border-red-200 text-red-500 hover:bg-red-50 cursor-pointer">🗑️</button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           )}

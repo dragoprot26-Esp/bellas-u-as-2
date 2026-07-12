@@ -16,7 +16,7 @@ import {
   Heart,
   QrCode
 } from 'lucide-react';
-import { Salon, Service, ProductItem, ProductOrder } from '../types';
+import { Salon, Service, ProductItem, ProductOrder, SalonReview } from '../types';
 import { bellAgregarPedido } from '../cloud';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -25,20 +25,41 @@ interface PublicSalonPageProps {
   onOpenBooking: (preSelected: Service | null) => void;
   onNavigateToAdmin: () => void;
   onUpdateSalon?: (updatedSalon: Salon) => void;
+  onSubmitReview?: (r: { name: string; text: string; rating: number }) => Promise<boolean>;
 }
 
-export default function PublicSalonPage({ 
-  salon, 
-  onOpenBooking, 
+export default function PublicSalonPage({
+  salon,
+  onOpenBooking,
   onNavigateToAdmin,
-  onUpdateSalon
+  onUpdateSalon,
+  onSubmitReview
 }: PublicSalonPageProps) {
-  const [activeCategory, setActiveCategory] = useState<string>('Nuevos');
+  const [activeCategory, setActiveCategory] = useState<string>('Todos');
   const [showMap, setShowMap] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [showReferralModal, setShowReferralModal] = useState(false);
   const [likedItems, setLikedItems] = useState<Record<string, boolean>>({});
+
+  // Reseñas de clientes
+  const [reviewOpen, setReviewOpen] = useState<SalonReview | null>(null);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [revName, setRevName] = useState('');
+  const [revText, setRevText] = useState('');
+  const [revRating, setRevRating] = useState(5);
+  const [revBusy, setRevBusy] = useState(false);
+  const [revSent, setRevSent] = useState(false);
+  const reseñasAprobadas: SalonReview[] = (salon.reviews || []).filter((r) => r && r.approved);
+  const enviarResena = async () => {
+    if (!onSubmitReview || !revName.trim() || !revText.trim()) return;
+    setRevBusy(true);
+    try {
+      const ok = await onSubmitReview({ name: revName.trim(), text: revText.trim(), rating: revRating });
+      if (ok) { setRevSent(true); setRevName(''); setRevText(''); setRevRating(5); }
+      else { alert('No se pudo enviar tu opinión. Probá de nuevo.'); }
+    } finally { setRevBusy(false); }
+  };
 
   // Carterita Cart State Variables
   const [cart, setCart] = useState<{ product: ProductItem; quantity: number }[]>([]);
@@ -132,6 +153,7 @@ export default function PublicSalonPage({
 
   // Categories dictionary translating state values to original names in Spanish
   const categoryNames: Record<string, string> = {
+    'Todos': '✨ Todos',
     'Nuevos': '🌸 Nuevos modelos',
     'Elegidos': '⭐ Los más elegidos',
     'Destacados': '💖 Destacados',
@@ -440,10 +462,11 @@ export default function PublicSalonPage({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <AnimatePresence mode="wait">
             {(() => {
+              const esTodos = activeCategory === 'Todos';
               const prodMap: Record<string, string> = { 'Promos': 'Promo', 'Productos': 'Productos', 'Destacados': 'Destacados', 'Lo más vistos': 'Lo más vistos' };
               const wantProd = prodMap[activeCategory];
-              const productsToRender = wantProd ? (salon.products?.filter(p => p.category === wantProd) || []) : [];
-              const servicesToRender = salon.services?.filter(s => (s.category || 'Servicios') === activeCategory) || [];
+              const productsToRender = esTodos ? (salon.products || []) : (wantProd ? (salon.products?.filter(p => p.category === wantProd) || []) : []);
+              const servicesToRender = esTodos ? (salon.services || []) : (salon.services?.filter(s => (s.category || 'Servicios') === activeCategory) || []);
               if (productsToRender.length === 0 && servicesToRender.length === 0) {
                 return (
                   <div className="col-span-full py-16 text-center text-gray-400 space-y-2">
@@ -706,24 +729,87 @@ export default function PublicSalonPage({
             </span>
           </div>
           <div className="space-y-4">
-            <div className={`p-4 relative ${
-              isMinimal 
-                ? 'bg-neutral-50/50 border border-neutral-100' 
-                : 'bg-[#FFF6F6]/50 rounded-2xl border border-pink-50'
-            }`}>
-              <span className={`text-3xl font-serif absolute top-2 left-3 ${isMinimal ? 'text-neutral-200' : 'text-pink-200'}`}>“</span>
-              <p className={`text-xs leading-relaxed pl-4 relative z-10 italic ${isMinimal ? 'text-neutral-500 font-light' : 'text-gray-600 font-medium'}`}>
-                La manicuría rusa de Camila es excelente, súper prolija y duradera. El efecto aurora de Sofía es una locura, ¡me voy súper feliz!
-              </p>
-              <div className="mt-2.5 pl-4 flex items-center justify-between">
-                <span className={isMinimal ? "text-[9px] font-semibold text-neutral-800 tracking-wider uppercase" : "text-[10px] font-bold text-gray-800"}>
-                  — Carolina M.
-                </span>
-                <span className="text-[10px] text-amber-500 font-bold">★★★★★</span>
+            {reseñasAprobadas.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                {reseñasAprobadas.map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={() => setReviewOpen(r)}
+                    className={`text-left p-3 rounded-2xl border transition-all hover:shadow-md cursor-pointer ${isMinimal ? 'bg-neutral-50/60 border-neutral-100 hover:border-neutral-300' : 'bg-[#FFF6F6]/60 border-pink-100 hover:border-pink-300'}`}
+                  >
+                    <span className="text-[10px] text-amber-500 font-bold block">{'★'.repeat(Math.max(1, Math.min(5, r.rating || 5)))}</span>
+                    <p className="text-[11px] leading-snug text-gray-600 mt-1 line-clamp-3 italic">“{r.text}”</p>
+                    <span className="text-[10px] font-bold text-gray-800 block mt-1.5 truncate">— {r.name}</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400 italic py-2">Todavía no hay opiniones. ¡Sé la primera persona en dejar la tuya! 💕</p>
+            )}
+            <button
+              onClick={() => { setShowReviewForm(true); setRevSent(false); }}
+              className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${isMinimal ? 'bg-black text-white hover:bg-neutral-800' : `${salon.colorTheme.primary} text-white hover:opacity-90 shadow-md`}`}
+            >
+              ✍️ Dejá tu opinión
+            </button>
+          </div>
+        </div>
+
+        {/* Modal: reseña ampliada */}
+        {reviewOpen && (
+          <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setReviewOpen(null)}>
+            <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl relative" onClick={(e) => e.stopPropagation()}>
+              <button onClick={() => setReviewOpen(null)} className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-lg cursor-pointer">✕</button>
+              <span className="text-sm text-amber-500 font-bold block">{'★'.repeat(Math.max(1, Math.min(5, reviewOpen.rating || 5)))}</span>
+              <p className="text-sm leading-relaxed text-gray-700 mt-3 italic">“{reviewOpen.text}”</p>
+              <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3">
+                <span className="text-xs font-bold text-gray-800">— {reviewOpen.name}</span>
+                {reviewOpen.date && <span className="text-[10px] text-gray-400">{new Date(reviewOpen.date).toLocaleDateString()}</span>}
               </div>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Modal: dejar opinión */}
+        {showReviewForm && (
+          <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowReviewForm(false)}>
+            <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl relative" onClick={(e) => e.stopPropagation()}>
+              <button onClick={() => setShowReviewForm(false)} className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-lg cursor-pointer">✕</button>
+              {revSent ? (
+                <div className="text-center py-6 space-y-2">
+                  <span className="text-4xl block">💕</span>
+                  <h3 className="text-base font-bold text-gray-800">¡Gracias por tu opinión!</h3>
+                  <p className="text-xs text-gray-500">Quedó enviada. La vas a ver publicada cuando el salón la apruebe.</p>
+                  <button onClick={() => setShowReviewForm(false)} className={`mt-3 px-5 py-2 rounded-xl text-xs font-bold text-white cursor-pointer ${salon.colorTheme.primary}`}>Listo</button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <h3 className="text-base font-bold text-gray-800">Dejá tu opinión ✨</h3>
+                  <div>
+                    <label className="text-[11px] font-semibold text-gray-500">Tu nombre</label>
+                    <input value={revName} onChange={(e) => setRevName(e.target.value)} placeholder="Ej: Carolina M." className="w-full mt-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-400" />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-gray-500">Puntaje</label>
+                    <div className="flex gap-1 mt-1">
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <button key={n} type="button" onClick={() => setRevRating(n)} className={`text-2xl leading-none cursor-pointer ${n <= revRating ? 'text-amber-500' : 'text-gray-300'}`}>★</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-gray-500">Tu opinión</label>
+                    <textarea value={revText} onChange={(e) => setRevText(e.target.value)} rows={3} placeholder="Contanos cómo te fue…" className="w-full mt-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pink-400 resize-none" />
+                  </div>
+                  <button onClick={enviarResena} disabled={revBusy || !revName.trim() || !revText.trim()} className={`w-full py-2.5 rounded-xl text-xs font-bold text-white disabled:opacity-50 cursor-pointer ${salon.colorTheme.primary}`}>
+                    {revBusy ? 'Enviando…' : 'Enviar opinión'}
+                  </button>
+                  <p className="text-[10px] text-gray-400 text-center">Tu opinión se publica luego de que el salón la apruebe.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* 3b. Referral & Friend Share Section — habilitado por el admin */}
         {salon.referralEnabled && (

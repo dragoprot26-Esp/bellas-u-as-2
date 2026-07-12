@@ -711,9 +711,45 @@ export default function AdminPanel({
     });
   };
 
-  const triggerExport = () => {
+  const [finBackupHecho, setFinBackupHecho] = useState(false);
+  const [finPuedeBorrar, setFinPuedeBorrar] = useState(false);
+
+  const exportarPlanilla = () => {
+    const esc = (v: any) => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+    const rol = currentUser?.role === 'admin' ? 'Dueño / Admin' : 'Colaborador';
+    const rows: string[] = [];
+    // Fila 1: quién exporta (vendedor / admin) — estilo Bar-Cel
+    rows.push([esc(rol + ': ' + (currentUser?.name || '')), esc('Salón: ' + activeSalon.name), esc('Emitido: ' + new Date().toLocaleString())].join(';'));
+    rows.push('');
+    rows.push(['Fecha', 'Hora', 'Cliente', 'Teléfono', 'Servicio', 'Profesional', 'Estado', 'Precio'].map(esc).join(';'));
+    salonAppointments.forEach(a => {
+      rows.push([a.date, a.time, a.clientName, a.clientPhone, a.serviceName, a.staffName, a.status, a.price].map(esc).join(';'));
+    });
+    rows.push('');
+    const totalCompletado = salonAppointments.filter(a => a.status === 'Completado').reduce((s, a) => s + (a.price || 0), 0);
+    rows.push([esc('Total facturado (completadas)'), esc(totalCompletado)].join(';'));
+
+    const csv = '﻿' + rows.join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Finanzas_${activeSalon.name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+
+    setFinBackupHecho(true);
     setExportSuccess(true);
     setTimeout(() => setExportSuccess(false), 2500);
+  };
+
+  const vaciarFinanzas = () => {
+    if (!finPuedeBorrar) return;
+    if (!confirm('¿Vaciar el historial de finanzas? Se eliminarán las citas COMPLETADAS de esta sucursal (el resto queda). Asegurate de haber descargado la planilla.')) return;
+    const restantes = appointments.filter(a => !(a.salonId === activeSalon.id && a.status === 'Completado'));
+    onUpdateAppointments(restantes);
+    setFinPuedeBorrar(false);
+    setFinBackupHecho(false);
   };
 
   if (!currentUser) {
@@ -1010,14 +1046,21 @@ export default function AdminPanel({
 
               <button
                 onClick={() => setActiveTab('reseñas')}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all ${
                   activeTab === 'reseñas'
                     ? 'bg-pink-500/10 text-pink-400 border-l-4 border-pink-500'
                     : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900'
                 }`}
               >
-                <span className="w-4.5 h-4.5 flex items-center justify-center">🌟</span>
-                <span>Reseñas</span>
+                <div className="flex items-center space-x-3">
+                  <span className="w-4.5 h-4.5 flex items-center justify-center">🌟</span>
+                  <span>Reseñas</span>
+                </div>
+                {(((activeSalon.reviews as any[]) || []).filter((r: any) => !r.approved).length) > 0 && (
+                  <span className="bg-pink-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full">
+                    {((activeSalon.reviews as any[]) || []).filter((r: any) => !r.approved).length}
+                  </span>
+                )}
               </button>
             </>
           )}
@@ -1427,18 +1470,41 @@ export default function AdminPanel({
                   <p className="text-xs text-slate-400">Analizá el rendimiento comercial de la sucursal y descargá resúmenes en un clic.</p>
                 </div>
                 <button
-                  onClick={triggerExport}
+                  onClick={exportarPlanilla}
                   className="flex items-center space-x-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 hover:text-white text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
                 >
-                  <FileText className="w-4 h-4 text-pink-400" />
-                  <span>Exportar Reporte Mensual (PDF)</span>
+                  <FileText className="w-4 h-4 text-emerald-400" />
+                  <span>Exportar planilla (Excel/CSV)</span>
                 </button>
               </div>
 
               {exportSuccess && (
                 <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-2xl flex items-center space-x-2 text-xs">
                   <Check className="w-5 h-5 shrink-0" />
-                  <span>¡Reporte exportado con éxito! Se ha descargado el balance consolidado del salón a su dispositivo.</span>
+                  <span>¡Planilla descargada! Abrila con Excel o Google Sheets.</span>
+                </div>
+              )}
+
+              {finBackupHecho && (
+                <div className="p-4 bg-slate-950 border border-red-900/40 rounded-2xl space-y-3">
+                  <div className="flex items-start gap-2">
+                    <span className="text-red-400 text-lg">🗑️</span>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-200">Vaciar historial de finanzas</h4>
+                      <p className="text-[11px] text-slate-400">Elimina las citas <strong>completadas</strong> de esta sucursal (el resto queda). Descargá la planilla antes.</p>
+                    </div>
+                  </div>
+                  <label className="flex items-center gap-2 text-[11px] text-slate-300 cursor-pointer">
+                    <input type="checkbox" checked={finPuedeBorrar} onChange={e => setFinPuedeBorrar(e.target.checked)} />
+                    Ya descargué la planilla, habilitar el borrado
+                  </label>
+                  <button
+                    onClick={vaciarFinanzas}
+                    disabled={!finPuedeBorrar}
+                    className="px-4 py-2 rounded-xl text-xs font-bold bg-red-500/90 hover:bg-red-500 text-white disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    Vaciar finanzas
+                  </button>
                 </div>
               )}
 

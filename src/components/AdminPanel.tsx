@@ -531,6 +531,37 @@ export default function AdminPanel({
     collaborators: [], products: [], orders: [],
   } as Salon);
 
+  const handlePrintQR = () => {
+    const link = window.location.origin + '/?codigo=' + activeSalon.id;
+    const qr = 'https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=10&data=' + encodeURIComponent(link);
+    const w = window.open('', '_blank');
+    if (!w) return;
+    w.document.write(
+      '<html><head><title>QR - ' + activeSalon.name + '</title>' +
+      '<style>' +
+      '@page { size: A4; margin: 0; }' +
+      'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin:0; color:#0f172a; }' +
+      '.page { width:210mm; min-height:297mm; box-sizing:border-box; padding:26mm 20mm; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; }' +
+      '.name { font-size:40px; font-weight:800; letter-spacing:1px; margin:0 0 6px; }' +
+      '.tag { font-size:14px; letter-spacing:4px; text-transform:uppercase; color:#db2777; margin:0 0 28px; }' +
+      '.qr { width:340px; height:340px; border:2px solid #0f172a; border-radius:18px; padding:14px; }' +
+      '.cta { font-size:26px; font-weight:800; margin:30px 0 10px; }' +
+      '.sub { font-size:17px; color:#334155; max-width:150mm; line-height:1.55; margin:0 auto; }' +
+      '.foot { margin-top:34px; font-size:12px; color:#94a3b8; font-family:monospace; }' +
+      '</style></head><body>' +
+      '<div class="page">' +
+      '<div class="name">' + (activeSalon.name || 'Bellas Unas').toUpperCase() + '</div>' +
+      '<div class="tag">Reserva online</div>' +
+      '<img class="qr" src="' + qr + '" referrerpolicy="no-referrer" alt="QR" onload="setTimeout(function(){window.print();},250)" />' +
+      '<div class="cta">Escanea y reserva tu turno al instante</div>' +
+      '<div class="sub">Apunta la camara de tu celular al codigo y entra a nuestra pagina: mira los servicios, precios y reserva tu turno desde donde estes. Se la primera en aprovechar las promos.</div>' +
+      '<div class="foot">' + link + '</div>' +
+      '</div>' +
+      '</body></html>'
+    );
+    w.document.close();
+  };
+
   // Filter appointments for the active salon
   const salonAppointments = appointments.filter(a => a.salonId === activeSalon.id);
 
@@ -1702,6 +1733,36 @@ export default function AdminPanel({
           {/* TAB 5: SETTINGS PERFIL */}
           {activeTab === 'settings' && (
             <div className="space-y-6 animate-fadeIn">
+              {/* QR del salon: descargar / imprimir para colgar en el local */}
+              <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 space-y-4">
+                <span className="text-xs font-bold tracking-widest text-pink-400 uppercase block border-b border-slate-800 pb-2 flex items-center gap-2"><span>📱</span> Tu QR para el local</span>
+                <p className="text-xs text-slate-400">Descargalo o imprimilo y colgalo en tu salón. Tus clientas lo escanean y reservan turno desde el celular.</p>
+                <div className="flex flex-col sm:flex-row items-center gap-5">
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=8&data=${encodeURIComponent(window.location.origin + '/?codigo=' + activeSalon.id)}`}
+                    alt="QR del salón"
+                    referrerPolicy="no-referrer"
+                    className="w-40 h-40 rounded-lg bg-white p-2 shrink-0"
+                  />
+                  <div className="flex-1 w-full space-y-3">
+                    <div className="text-[11px] font-mono text-pink-300 break-all bg-slate-900 border border-slate-800 rounded px-3 py-2">{window.location.origin + '/?codigo=' + activeSalon.id}</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <a
+                        href={`https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&margin=20&data=${encodeURIComponent(window.location.origin + '/?codigo=' + activeSalon.id)}`}
+                        download={`QR-${activeSalon.name}.png`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold py-2.5 rounded-lg"
+                      >Descargar QR</a>
+                      <button
+                        type="button"
+                        onClick={handlePrintQR}
+                        className="flex items-center justify-center gap-1.5 bg-pink-500 hover:bg-pink-400 text-white text-xs font-bold py-2.5 rounded-lg"
+                      >Imprimir PDF</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
               <div>
                 <h3 className="text-xl font-bold text-white">Configuración del Salón (Inquilino)</h3>
                 <p className="text-xs text-slate-400">Modificá los datos generales de la sucursal activa. Los cambios se verán inmediatamente en la web pública de reservas.</p>

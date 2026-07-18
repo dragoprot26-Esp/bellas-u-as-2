@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { comprimirImagen } from '../img';
 import { 
   BarChart3, 
   Calendar as CalendarIcon, 
@@ -324,15 +325,11 @@ export default function AdminPanel({
     setNewProdComponents(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, callback: (base64: string) => void) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, callback: (base64: string) => void) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        callback(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+    const r = await comprimirImagen(file, 1000, 0.72);
+    if (r) callback(r); else alert('No se pudo procesar la imagen.');
   };
 
   const handleSaveProduct = (e: React.FormEvent) => {

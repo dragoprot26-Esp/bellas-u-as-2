@@ -7,7 +7,7 @@ import AdminPanel from './components/AdminPanel';
 import { Sparkles, Download, Check, X, KeyRound } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  bellPublica, bellAgregarCita, bellAgregarResena, cloudLoad, cloudSave,
+  bellPublica, bellAgregarCita, bellAgregarResena, bellVersion, cloudLoad, cloudSave,
   bellHistListar, bellHistRestaurar,
   estaLogueado, miMembresia, signOutGlobal,
 } from './cloud';
@@ -170,9 +170,13 @@ export default function App() {
   // Campanita: sondeo de turnos y pedidos nuevos (cada 15s) para el panel
   useEffect(() => {
     if (!isAdminMode || !cloudCode || isPublicView) return;
+    let lastVer = '';
     const iv = setInterval(async () => {
+      const ver = await bellVersion(cloudCode);
+      if (!ver || ver === lastVer) return; // nada cambió → no baja imágenes
       const remote = await cloudLoad(cloudCode);
       if (!remote) return;
+      lastVer = ver;
       if (Array.isArray(remote.appointments)) {
         setAppointments(prev => {
           const ids = new Set(prev.map(a => a.id));
@@ -198,7 +202,7 @@ export default function App() {
           return nuevosR.length ? { ...prev, reviews: [...nuevosR, ...((prev.reviews as any[]) || [])] } : prev;
         });
       }
-    }, 15000);
+    }, 30000);
     return () => clearInterval(iv);
   }, [isAdminMode, cloudCode, isPublicView]);
 

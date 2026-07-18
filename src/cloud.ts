@@ -152,3 +152,9 @@ export async function bellHistListar(codigo: string): Promise<any[]> {
 export async function bellHistRestaurar(codigo: string, id: number): Promise<any | null> {
   try { const r = await rpc('bell_hist_restaurar', { p_codigo: codigo, p_id: id }); return (r && r.ok) ? r.data : null; } catch (e) { return null; }
 }
+
+// Optimización de egress: solo timestamp para saber si cambió
+export async function bellVersion(codigo: string): Promise<string> {
+  try { const r = await rpc('bell_version', { p_codigo: codigo }, false); return typeof r === 'string' ? r : String(r || ''); }
+  catch (e) { return ''; }
+}

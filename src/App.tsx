@@ -20,6 +20,7 @@ export default function App() {
   const [cloudCode, setCloudCode] = useState<string>('');
   const [isPublicView, setIsPublicView] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [bloqueada, setBloqueada] = useState<boolean>(false);
 
   // UI
   const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
@@ -43,6 +44,7 @@ export default function App() {
       if (code) {
         setCloudCode(code); setIsPublicView(true);
         const r = await bellPublica(code);
+        if (r && (r as any).bloqueada) { setBloqueada(true); setLoading(false); return; }  // kill switch
         if (r && r.ok && r.salon) aplicarSalon(r.salon, code);
         setLoading(false);
         return;
@@ -234,6 +236,23 @@ export default function App() {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-200 flex items-center justify-center">
         <div className="text-center space-y-2"><span className="text-3xl">💅</span><p className="text-sm">Cargando…</p></div>
+      </div>
+    );
+  }
+
+  // Kill switch: si el dueño bloqueó la pública, el visitante ve "En Mantenimiento".
+  if (bloqueada && isPublicView) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-slate-950 text-slate-100">
+        <div className="max-w-md w-full text-center bg-slate-900 border border-white/10 rounded-3xl p-8 shadow-2xl">
+          <div className="text-5xl mb-4">🛠️</div>
+          <h1 className="text-2xl font-bold tracking-tight mb-2">En Mantenimiento</h1>
+          <p className="text-sm text-slate-400 leading-relaxed">
+            Estamos trabajando para brindarte una mejor experiencia. La página vuelve muy pronto.
+            <br /><br />¡Gracias por tu paciencia! Saludos cordiales. 🙌
+          </p>
+          <div className="mt-6 h-1 w-16 bg-pink-500 rounded-full mx-auto"></div>
+        </div>
       </div>
     );
   }
